@@ -1,7 +1,7 @@
 ---
 name: "ask-user-question"
 description: "Ask the user questions or present choices via an interactive form. Use when you need to gather preferences, clarify ambiguous instructions, get decisions on implementation choices, or present a list of options for the user to select from. Never write options or questions as plain text — always use this tool."
-displayName: "用户提问"
+displayName: "提问"
 version: "1.0.0"
 author: "Wegent Team"
 tags: ["interaction", "user-input", "form", "clarification"]
