@@ -126,8 +126,11 @@ describe('AskUserForm', () => {
       fireEvent.click(submitButton)
     })
 
-    // onSubmit receives (askId, formattedMessage) where formattedMessage is the option label
-    expect(mockOnSubmit).toHaveBeenCalledWith('ask_test123', 'JavaScript')
+    // onSubmit receives (askId, formattedMessage) — structured markdown for ClarificationAnswerSummary
+    expect(mockOnSubmit).toHaveBeenCalledWith(
+      'ask_test123',
+      '## 📝 我的回答 (My Answers)\n\n### ASK_TEST123: Which programming language do you prefer?\n**Answer**: `javascript` - JavaScript\n\n'
+    )
   })
 
   it('calls onSubmit with formatted labels for multiple choice', async () => {
@@ -158,8 +161,11 @@ describe('AskUserForm', () => {
       fireEvent.click(submitButton)
     })
 
-    // Labels joined with 、
-    expect(mockOnSubmit).toHaveBeenCalledWith('ask_test123', 'Python、Go')
+    // onSubmit receives structured markdown with multiple values as a list
+    expect(mockOnSubmit).toHaveBeenCalledWith(
+      'ask_test123',
+      '## 📝 我的回答 (My Answers)\n\n### ASK_TEST123: Which programming language do you prefer?\n**Answer**: \n- `python` - Python\n- `go` - Go\n\n'
+    )
   })
 
   it('calls onSubmit with text value for text input', async () => {
@@ -181,7 +187,10 @@ describe('AskUserForm', () => {
       fireEvent.click(submitButton)
     })
 
-    expect(mockOnSubmit).toHaveBeenCalledWith('ask_test123', 'My custom answer')
+    expect(mockOnSubmit).toHaveBeenCalledWith(
+      'ask_test123',
+      '## 📝 我的回答 (My Answers)\n\n### ASK_TEST123: Which programming language do you prefer?\n**Answer**: My custom answer\n\n'
+    )
   })
 
   it('shows inline validation error when required field is empty', async () => {
@@ -283,6 +292,9 @@ describe('AskUserForm', () => {
       fireEvent.click(submitButton)
     })
 
-    expect(mockOnSubmit).toHaveBeenCalledWith('ask_test123', 'My custom preference')
+    expect(mockOnSubmit).toHaveBeenCalledWith(
+      'ask_test123',
+      '## 📝 我的回答 (My Answers)\n\n### ASK_TEST123: Which programming language do you prefer?\n**Answer**: My custom preference\n\n'
+    )
   })
 })
