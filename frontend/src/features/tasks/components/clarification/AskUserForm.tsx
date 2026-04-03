@@ -35,7 +35,7 @@ interface QuestionWidgetProps {
   value: string[]
   customText: string
   isCustomMode: boolean
-  isSubmitted: boolean
+  isReadOnly: boolean
   hasError: boolean
   onSingleChange: (qId: string, value: string) => void
   onMultiChange: (qId: string, value: string, checked: boolean) => void
@@ -47,7 +47,7 @@ function QuestionWidget({
   value,
   customText,
   isCustomMode,
-  isSubmitted,
+  isReadOnly,
   hasError,
   onSingleChange,
   onMultiChange,
@@ -64,7 +64,7 @@ function QuestionWidget({
         placeholder={
           question.placeholder || t('ask_user_question.text_placeholder') || 'Enter your answer...'
         }
-        disabled={isSubmitted}
+        disabled={isReadOnly}
         rows={3}
         className={`w-full${hasError ? ' border-red-500 focus-visible:ring-red-500' : ''}`}
         data-testid={`ask-user-textarea-${question.id}`}
@@ -81,7 +81,7 @@ function QuestionWidget({
         value={customText}
         onChange={e => onCustomTextChange(question.id, e.target.value)}
         placeholder={t('ask_user_question.custom_placeholder') || 'Enter custom input...'}
-        disabled={isSubmitted}
+        disabled={isReadOnly}
         rows={3}
         className={`w-full${hasError ? ' border-red-500 focus-visible:ring-red-500' : ''}`}
         data-testid={`ask-user-custom-textarea-${question.id}`}
@@ -104,7 +104,7 @@ function QuestionWidget({
               onCheckedChange={checked =>
                 onMultiChange(question.id, option.value, checked as boolean)
               }
-              disabled={isSubmitted}
+              disabled={isReadOnly}
               data-testid={`ask-user-option-${question.id}-${index}`}
             />
             <label
@@ -128,7 +128,7 @@ function QuestionWidget({
     <RadioGroup
       value={value[0] || ''}
       onValueChange={v => onSingleChange(question.id, v)}
-      disabled={isSubmitted}
+      disabled={isReadOnly}
       className={`flex flex-col gap-2${hasError ? ' rounded border border-red-500 p-2' : ''}`}
       data-testid={`ask-user-radio-${question.id}`}
     >
@@ -137,7 +137,7 @@ function QuestionWidget({
           <RadioGroupItem
             value={option.value}
             id={`ask-user-${question.id}-option-${index}`}
-            disabled={isSubmitted}
+            disabled={isReadOnly}
             data-testid={`ask-user-option-${question.id}-${index}`}
           />
           <label
@@ -247,6 +247,16 @@ export default function AskUserForm({
     return messagesAfter.some(msg => msg.type === 'user')
   }, [localSubmitted, messages, currentMessageIndex])
 
+  // Disable form while the AI message containing this tool call is still streaming.
+  // The form becomes interactive only after the message completes (task enters ready state).
+  const isCurrentMessageStreaming = useMemo(() => {
+    if (messages.length === 0) return false
+    return messages[currentMessageIndex]?.status === 'streaming'
+  }, [messages, currentMessageIndex])
+
+  // Combined read-only state: either streaming (task not done yet) or already submitted
+  const isReadOnly = isCurrentMessageStreaming || isSubmitted
+
   // Initialize default values (auto-select recommended options)
   useEffect(() => {
     if (hasUserInteracted) return
@@ -276,14 +286,14 @@ export default function AskUserForm({
   }
 
   const handleSingleChange = (qId: string, value: string) => {
-    if (isSubmitted) return
+    if (isReadOnly) return
     setHasUserInteracted(true)
     setSelectedValues(prev => ({ ...prev, [qId]: [value] }))
     clearFieldError(qId)
   }
 
   const handleMultiChange = (qId: string, value: string, checked: boolean) => {
-    if (isSubmitted) return
+    if (isReadOnly) return
     setHasUserInteracted(true)
     setSelectedValues(prev => ({
       ...prev,
@@ -293,14 +303,14 @@ export default function AskUserForm({
   }
 
   const handleCustomTextChange = (qId: string, value: string) => {
-    if (isSubmitted) return
+    if (isReadOnly) return
     setHasUserInteracted(true)
     setCustomTexts(prev => ({ ...prev, [qId]: value }))
     clearFieldError(qId)
   }
 
   const handleToggleCustom = (qId: string) => {
-    if (isSubmitted) return
+    if (isReadOnly) return
     setHasUserInteracted(true)
     setCustomModes(prev => {
       const next = !prev[qId]
@@ -403,7 +413,7 @@ export default function AskUserForm({
             </div>
             {/* Single-question mode: toggle button next to the question title */}
             {!isMultiQuestion &&
-              !isSubmitted &&
+              !isReadOnly &&
               (() => {
                 const q = normalizedQuestions[0]
                 const isChoiceQuestion =
@@ -456,7 +466,7 @@ export default function AskUserForm({
                         </span>
                       )}
                     </div>
-                    {isChoiceQuestion && !isSubmitted && (
+                    {isChoiceQuestion && !isReadOnly && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -487,7 +497,7 @@ export default function AskUserForm({
                   value={selectedValues[q.id] ?? []}
                   customText={customTexts[q.id] ?? ''}
                   isCustomMode={isInCustomMode}
-                  isSubmitted={isSubmitted}
+                  isReadOnly={isReadOnly}
                   hasError={Boolean(fieldErrors[q.id])}
                   onSingleChange={handleSingleChange}
                   onMultiChange={handleMultiChange}
@@ -510,13 +520,14 @@ export default function AskUserForm({
         })}
       </div>
 
-      {/* Submit button - hidden when submitted */}
+      {/* Submit button - hidden after submitted, disabled while streaming */}
       {!isSubmitted && (
         <div className="flex justify-end pt-2">
           <Button
             variant="secondary"
             onClick={handleSubmit}
             size="lg"
+            disabled={isCurrentMessageStreaming}
             data-testid="ask-user-submit"
           >
             <Send className="w-4 h-4 mr-2" />
