@@ -38,6 +38,7 @@ import {
   ChatSloganTipsResponse,
   SloganTipMode,
 } from '@/apis/admin'
+import { CardFieldMappingsPanel } from './CardFieldMappingsPanel'
 import {
   Select,
   SelectContent,
@@ -461,6 +462,11 @@ const SystemConfigPanel: React.FC = () => {
           handleDeleteTipClick as (item: ChatSloganItem | ChatTipItem, index: number) => void,
           t('admin:system_config.no_tips')
         )}
+      </Card>
+
+      {/* Card Field Mappings Configuration */}
+      <Card className="p-6">
+        <CardFieldMappingsPanel />
       </Card>
 
       {/* Version Info */}

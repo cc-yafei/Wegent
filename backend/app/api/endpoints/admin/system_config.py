@@ -13,6 +13,8 @@ from app.models.system_config import SystemConfig
 from app.models.user import User
 from app.schemas.admin import (
     AdminSetupCompleteResponse,
+    CardPollFieldMappingsConfig,
+    CardPollFieldMappingsUpdate,
     ChatSloganItem,
     ChatSloganTipsResponse,
     ChatSloganTipsUpdate,
@@ -27,6 +29,7 @@ router = APIRouter()
 QUICK_ACCESS_CONFIG_KEY = "quick_access_recommended"
 CHAT_SLOGAN_TIPS_CONFIG_KEY = "chat_slogan_tips"
 ADMIN_SETUP_CONFIG_KEY = "admin_setup_completed"
+CARD_FIELD_MAPPINGS_CONFIG_KEY = "card_poll_field_mappings"
 
 # Default slogan and tips configuration
 DEFAULT_SLOGAN_TIPS_CONFIG = {
@@ -257,4 +260,71 @@ async def mark_admin_setup_complete(
     return AdminSetupCompleteResponse(
         success=True,
         message="Admin setup wizard marked as completed",
+    )
+
+
+# ==================== Card Poll Field Mappings ====================
+
+
+@router.get(
+    "/system-config/card-field-mappings",
+    response_model=CardPollFieldMappingsConfig,
+)
+async def get_card_field_mappings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+):
+    """Get card poll field mappings configuration."""
+    config = (
+        db.query(SystemConfig)
+        .filter(SystemConfig.config_key == CARD_FIELD_MAPPINGS_CONFIG_KEY)
+        .first()
+    )
+    if not config:
+        return CardPollFieldMappingsConfig(version=0, mappings=[])
+
+    value = config.config_value or {}
+    return CardPollFieldMappingsConfig(
+        version=config.version,
+        mappings=value.get("mappings", []),
+    )
+
+
+@router.put(
+    "/system-config/card-field-mappings",
+    response_model=CardPollFieldMappingsConfig,
+)
+async def update_card_field_mappings(
+    config_data: CardPollFieldMappingsUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_admin_user),
+):
+    """Update card poll field mappings configuration (admin only)."""
+    config = (
+        db.query(SystemConfig)
+        .filter(SystemConfig.config_key == CARD_FIELD_MAPPINGS_CONFIG_KEY)
+        .first()
+    )
+
+    new_value = {"mappings": [m.model_dump() for m in config_data.mappings]}
+
+    if not config:
+        config = SystemConfig(
+            config_key=CARD_FIELD_MAPPINGS_CONFIG_KEY,
+            config_value=new_value,
+            version=1,
+            updated_by=current_user.id,
+        )
+        db.add(config)
+    else:
+        config.config_value = new_value
+        config.version = config.version + 1
+        config.updated_by = current_user.id
+
+    db.commit()
+    db.refresh(config)
+
+    return CardPollFieldMappingsConfig(
+        version=config.version,
+        mappings=config_data.mappings,
     )

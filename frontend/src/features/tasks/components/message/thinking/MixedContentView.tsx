@@ -16,7 +16,9 @@ import type { GeminiAnnotation } from '@/types/socket'
 import VideoPlayer from '../VideoPlayer'
 import { ImageGallery } from '../ImageGallery'
 import { AskUserForm } from '../../clarification'
+import { InteractiveCard } from '../../clarification'
 import type { AskUserFormData } from '@/types/api'
+import type { InteractiveCardData } from '@/types/api'
 
 interface MixedContentViewProps {
   thinking: ThinkingStep[] | null
@@ -35,6 +37,8 @@ interface MixedContentViewProps {
   currentMessageIndex?: number
   /** Callback when user submits an ask_user_question form - receives pre-formatted message string */
   onAskUserSubmit?: (askId: string, formattedMessage: string) => void
+  /** Callback when user clicks an interactive card button - receives cardId and hidden prompt */
+  onInteractiveCardSubmit?: (cardId: string, prompt: string) => void
 }
 
 /**
@@ -57,6 +61,7 @@ const MixedContentView = memo(function MixedContentView({
   subtaskId,
   currentMessageIndex,
   onAskUserSubmit,
+  onInteractiveCardSubmit,
 }: MixedContentViewProps) {
   const { t } = useTranslation('chat')
   // Extract tools from thinking (legacy mode)
@@ -129,6 +134,49 @@ const MixedContentView = memo(function MixedContentView({
               message: block.content, // Progress message
             }
           } else if (block.type === 'tool') {
+            // Check if this is a create_interactive_card tool - render as interactive card
+            if (block.tool_name?.includes('create_interactive_card') && block.tool_input) {
+              const input = block.tool_input as Record<string, unknown>
+              const parseBoolean = (value: unknown, defaultValue: boolean): boolean => {
+                if (typeof value === 'boolean') return value
+                if (typeof value === 'string') {
+                  const lower = value.toLowerCase()
+                  if (lower === 'true') return true
+                  if (lower === 'false') return false
+                }
+                return defaultValue
+              }
+              const rawButtons = Array.isArray(input.buttons) ? input.buttons : []
+              const cardData: InteractiveCardData = {
+                type: 'interactive_card',
+                card_id: (input.card_id as string) || block.id,
+                task_id: taskId || 0,
+                subtask_id: subtaskId || 0,
+                title: (input.title as string) || '',
+                description: (input.description as string) || null,
+                created_at: (input.created_at as string) || new Date().toISOString(),
+                status: (input.status as InteractiveCardData['status']) || 'pending',
+                progress: typeof input.progress === 'number' ? input.progress : null,
+                status_text: (input.status_text as string) || null,
+                click_url: (input.click_url as string) || null,
+                buttons: (rawButtons as Array<Record<string, unknown>>).map((btn, i) => ({
+                  id: (btn.id as string) || `btn_${i}`,
+                  label: (btn.label as string) || '',
+                  prompt: (btn.prompt as string) || '',
+                  style: (btn.style as 'primary' | 'secondary' | 'danger') || 'primary',
+                })),
+                dismissed: parseBoolean(input.dismissed, false),
+                dismissed_label: (input.dismissed_label as string) || null,
+                poll_url: (input.poll_url as string) || null,
+              }
+              return {
+                type: 'interactive_card' as const,
+                data: cardData,
+                blockId: block.id,
+                status: block.status,
+              }
+            }
+
             // Check if this is an ask_user_question tool - render as interactive form
             if (block.tool_name?.includes('interactive_form_question') && block.tool_input) {
               const input = block.tool_input as Record<string, unknown>
@@ -494,6 +542,18 @@ const MixedContentView = memo(function MixedContentView({
                   onUseAsReference={onUseAsReference}
                 />
               ) : null}
+            </div>
+          )
+        } else if (item.type === 'interactive_card') {
+          return (
+            <div key={item.blockId} className="pb-4">
+              <InteractiveCard
+                data={item.data}
+                taskId={taskId || 0}
+                currentMessageIndex={currentMessageIndex || 0}
+                blockStatus={item.status}
+                onSubmit={onInteractiveCardSubmit}
+              />
             </div>
           )
         } else if (item.type === 'interactive_form_question') {

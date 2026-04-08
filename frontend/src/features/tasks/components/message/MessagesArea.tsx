@@ -1135,6 +1135,15 @@ function MessagesArea({
     [onSendMessage]
   )
 
+  // Handle interactive card button click - send the hidden prompt as the next conversation message
+  const handleInteractiveCardSubmit = useCallback(
+    (_cardId: string, prompt: string) => {
+      if (!onSendMessage) return
+      onSendMessage(prompt)
+    },
+    [onSendMessage]
+  )
+
   // Pre-compute the last AI message subtaskId to avoid O(n²) complexity in render loop
   const lastAiMessageSubtaskId = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -1238,6 +1247,7 @@ function MessagesArea({
                     t={t}
                     onSendMessage={onSendMessage}
                     onAskUserSubmit={handleAskUserSubmit}
+                    onInteractiveCardSubmit={handleInteractiveCardSubmit}
                     isCurrentUserMessage={isCurrentUserMessage}
                     isGroupChat={isGroupChat}
                     isPendingConfirmation={isPendingConfirmation}
@@ -1302,6 +1312,7 @@ function MessagesArea({
                   t={t}
                   onSendMessage={onSendMessage}
                   onAskUserSubmit={handleAskUserSubmit}
+                  onInteractiveCardSubmit={handleInteractiveCardSubmit}
                   isCurrentUserMessage={isCurrentUserMessage}
                   onRetry={onRetry}
                   isGroupChat={isGroupChat}

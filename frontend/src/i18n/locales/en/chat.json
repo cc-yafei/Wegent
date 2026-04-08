@@ -624,5 +624,14 @@
     "custom_input": "Custom Input",
     "custom_placeholder": "Enter custom input..."
   },
+  "interactive_card": {
+    "created_at": "Created at",
+    "status_polling": "Checking...",
+    "status_completed": "Completed",
+    "status_failed": "Failed",
+    "status_pending": "Pending",
+    "dismissed": "Action taken: {{label}}",
+    "click_hint": "Click to view details"
+  },
   "scroll_to_bottom": "Scroll to bottom"
 }

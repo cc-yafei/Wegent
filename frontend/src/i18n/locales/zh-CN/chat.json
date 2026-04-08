@@ -602,5 +602,14 @@
     "custom_input": "自定义输入",
     "custom_placeholder": "请输入您的自定义内容..."
   },
+  "interactive_card": {
+    "created_at": "创建于",
+    "status_polling": "查询中...",
+    "status_completed": "已完成",
+    "status_failed": "失败",
+    "status_pending": "等待中",
+    "dismissed": "已操作：{{label}}",
+    "click_hint": "点击查看详情"
+  },
   "scroll_to_bottom": "滚动到底部"
 }

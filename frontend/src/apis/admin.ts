@@ -120,6 +120,24 @@ export interface ChatSloganTipsResponse {
   tips: ChatTipItem[]
 }
 
+// Card Poll Field Mapping Types
+export interface CardPollFieldMapping {
+  name: string
+  description?: string
+  url_pattern: string
+  field_mapping: Record<string, string>
+  status_value_mapping: Record<string, string[]>
+}
+
+export interface CardPollFieldMappingsConfig {
+  version: number
+  mappings: CardPollFieldMapping[]
+}
+
+export interface CardPollFieldMappingsUpdate {
+  mappings: CardPollFieldMapping[]
+}
+
 // Service Key Types
 export interface ServiceKey {
   id: number
@@ -601,6 +619,24 @@ export const adminApis = {
    */
   async updateSloganTipsConfig(data: ChatSloganTipsUpdate): Promise<ChatSloganTipsResponse> {
     return apiClient.put('/admin/system-config/slogan-tips', data)
+  },
+
+  // ==================== Card Poll Field Mappings ====================
+
+  /**
+   * Get card poll field mappings configuration
+   */
+  async getCardFieldMappings(): Promise<CardPollFieldMappingsConfig> {
+    return apiClient.get('/admin/system-config/card-field-mappings')
+  },
+
+  /**
+   * Update card poll field mappings configuration
+   */
+  async updateCardFieldMappings(
+    data: CardPollFieldMappingsUpdate
+  ): Promise<CardPollFieldMappingsConfig> {
+    return apiClient.put('/admin/system-config/card-field-mappings', data)
   },
 
   // ==================== Service Key Management ====================

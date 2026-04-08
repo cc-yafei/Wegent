@@ -158,6 +158,8 @@ export interface MessageBubbleProps {
   onSendMessage?: (content: string) => void
   /** Callback when user submits an ask_user_question form - sends the pre-formatted answer as a new conversation message */
   onAskUserSubmit?: (askId: string, formattedMessage: string) => void
+  /** Callback when user clicks an interactive card button - sends hidden prompt as next message */
+  onInteractiveCardSubmit?: (cardId: string, prompt: string) => void
   /** Callback when user selects text in AI message (optional) - receives selected text */
   onTextSelect?: (selectedText: string) => void
   /** Paragraph-level action configuration - shows action button on hover for each paragraph in AI messages */
@@ -349,6 +351,7 @@ const MessageBubble = memo(
     isWaiting,
     onSendMessage,
     onAskUserSubmit,
+    onInteractiveCardSubmit,
     onTextSelect,
     paragraphAction,
     isCurrentUserMessage,
@@ -1487,6 +1490,7 @@ const MessageBubble = memo(
                         subtaskId={msg.subtaskId}
                         currentMessageIndex={index}
                         onAskUserSubmit={onAskUserSubmit}
+                        onInteractiveCardSubmit={onInteractiveCardSubmit}
                       />
                       <SourceReferences sources={msg.sources || msg.result?.sources || []} />
                       <GeminiAnnotations annotations={msg.result?.annotations || []} />

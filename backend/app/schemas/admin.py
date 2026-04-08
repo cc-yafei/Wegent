@@ -554,3 +554,53 @@ class AdminSetupCompleteResponse(BaseModel):
 
     success: bool = Field(..., description="Whether the operation was successful")
     message: str = Field(..., description="Response message")
+
+
+# Card Poll Field Mapping Schemas
+class CardPollFieldMapping(BaseModel):
+    """Single card poll field mapping configuration.
+
+    Configures how to extract normalised card status fields from the raw HTTP
+    response returned by poll_url.
+
+    field_mapping keys are card fields (status, progress, status_text, click_url).
+    Values are dot-separated paths into the JSON response body (e.g., 'data.state').
+
+    status_value_mapping maps canonical statuses (completed, failed, polling) to
+    lists of raw values that should be treated as that status.
+    """
+
+    name: str = Field(..., description="Human-readable name for this mapping")
+    description: Optional[str] = Field(None, description="Optional description")
+    url_pattern: str = Field(
+        ...,
+        description="Regex pattern matched against poll_url to auto-select this mapping",
+    )
+    field_mapping: dict = Field(
+        default_factory=dict,
+        description=(
+            "Maps card fields to dot-separated response paths. "
+            "Supported keys: status, progress, status_text, click_url"
+        ),
+    )
+    status_value_mapping: dict = Field(
+        default_factory=lambda: {
+            "completed": ["completed", "done", "success", "finished"],
+            "failed": ["failed", "error", "timeout"],
+            "polling": ["running", "processing", "in_progress", "pending"],
+        },
+        description="Maps canonical statuses (completed/failed/polling) to raw response values",
+    )
+
+
+class CardPollFieldMappingsConfig(BaseModel):
+    """Container for all card poll field mappings stored in system_configs."""
+
+    version: int = 0
+    mappings: List[CardPollFieldMapping] = Field(default_factory=list)
+
+
+class CardPollFieldMappingsUpdate(BaseModel):
+    """Request body for updating card poll field mappings."""
+
+    mappings: List[CardPollFieldMapping]

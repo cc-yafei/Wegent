@@ -53,6 +53,8 @@ KNOWLEDGE_MCP_MOUNT_PATH = "/mcp/knowledge"
 KNOWLEDGE_MCP_TRANSPORT_PATH = "/sse"
 INTERACTIVE_FORM_MCP_MOUNT_PATH = "/mcp/interactive-form-question"
 INTERACTIVE_FORM_MCP_TRANSPORT_PATH = "/sse"
+INTERACTIVE_CARD_MCP_MOUNT_PATH = "/mcp/interactive-card"
+INTERACTIVE_CARD_MCP_TRANSPORT_PATH = "/sse"
 
 
 @dataclass(frozen=True)
@@ -287,6 +289,52 @@ def ensure_interactive_form_question_tools_registered() -> None:
     _register_interactive_form_question_tools()
 
 
+# ============== interactive_card MCP Server ==============
+# Provides interactive card creation tool
+# Available via Skill configuration
+# Uses decorator-based auto-registration from @mcp_tool decorated endpoints
+
+interactive_card_mcp_server = FastMCP(
+    "wegent-interactive-card-mcp",
+    stateless_http=True,
+    json_response=True,
+    streamable_http_path="/",
+    transport_security=_build_transport_security_settings(),
+)
+
+# Store for interactive_card MCP request context (used by McpAppSpec)
+_interactive_card_request_token_info: contextvars.ContextVar[
+    Optional[TaskTokenInfo]
+] = contextvars.ContextVar("_interactive_card_request_token_info", default=None)
+
+# Flag to track if tools have been registered
+_interactive_card_tools_registered = False
+
+
+def _register_interactive_card_tools() -> None:
+    """Register interactive_card tools from @mcp_tool decorated endpoints."""
+    global _interactive_card_tools_registered
+    if _interactive_card_tools_registered:
+        return
+
+    from app.mcp_server.tool_registry import register_tools_to_server
+    from app.mcp_server.tools import (  # noqa: F401 side-effect: triggers @mcp_tool registration
+        interactive_card,
+    )
+
+    count = register_tools_to_server(interactive_card_mcp_server, "interactive_card")
+    logger.info(
+        f"[MCP:InteractiveCard] Registered {count} tools from decorated endpoints"
+    )
+
+    _interactive_card_tools_registered = True
+
+
+def ensure_interactive_card_tools_registered() -> None:
+    """Ensure interactive_card MCP tools are registered."""
+    _register_interactive_card_tools()
+
+
 # ============== Starlette App Factory ==============
 
 _SYSTEM_MCP_SPEC = McpAppSpec(
@@ -322,7 +370,23 @@ _INTERACTIVE_FORM_MCP_SPEC = McpAppSpec(
     include_root_metadata=True,
 )
 
-MCP_APP_SPECS = (_SYSTEM_MCP_SPEC, _KNOWLEDGE_MCP_SPEC, _INTERACTIVE_FORM_MCP_SPEC)
+_INTERACTIVE_CARD_MCP_SPEC = McpAppSpec(
+    name="interactive_card",
+    service_name="wegent-interactive-card-mcp",
+    mount_path=INTERACTIVE_CARD_MCP_MOUNT_PATH,
+    transport_path=INTERACTIVE_CARD_MCP_TRANSPORT_PATH,
+    server=interactive_card_mcp_server,
+    token_context=_interactive_card_request_token_info,
+    log_prefix="InteractiveCard",
+    include_root_metadata=True,
+)
+
+MCP_APP_SPECS = (
+    _SYSTEM_MCP_SPEC,
+    _KNOWLEDGE_MCP_SPEC,
+    _INTERACTIVE_FORM_MCP_SPEC,
+    _INTERACTIVE_CARD_MCP_SPEC,
+)
 
 
 def _build_root_metadata(spec: McpAppSpec) -> Dict[str, Any]:
@@ -343,6 +407,8 @@ def _build_mcp_app(spec: McpAppSpec) -> Starlette:
         ensure_knowledge_tools_registered()
     elif spec.name == "interactive_form_question":
         ensure_interactive_form_question_tools_registered()
+    elif spec.name == "interactive_card":
+        ensure_interactive_card_tools_registered()
 
     async def health_check(request: Request) -> JSONResponse:
         return JSONResponse({"status": "healthy", "service": spec.service_name})
@@ -373,7 +439,11 @@ def _build_mcp_app(spec: McpAppSpec) -> Starlette:
                     token_info.user_name,
                 )
                 # Set MCPRequestContext for decorator-based tools
-                if spec.name in ("knowledge", "interactive_form_question"):
+                if spec.name in (
+                    "knowledge",
+                    "interactive_form_question",
+                    "interactive_card",
+                ):
                     mcp_ctx = MCPRequestContext(
                         token_info=token_info,
                         tool_name="",  # Will be set by tool invocation
@@ -541,6 +611,26 @@ def get_mcp_interactive_form_question_config(
         url=f"{backend_url}{INTERACTIVE_FORM_MCP_MOUNT_PATH}{INTERACTIVE_FORM_MCP_TRANSPORT_PATH}",
         auth_token=auth_token,
         timeout=300,  # 5 minutes for user response
+    )
+
+
+def get_mcp_interactive_card_config(
+    backend_url: str, auth_token: str
+) -> Dict[str, Any]:
+    """Get interactive_card MCP server configuration for Skill injection.
+
+    Args:
+        backend_url: Backend URL (e.g., "http://localhost:8000")
+        auth_token: Authentication token for MCP server
+
+    Returns:
+        MCP server configuration dictionary
+    """
+    return _build_streamable_http_config(
+        name="wegent-interactive-card",
+        url=f"{backend_url}{INTERACTIVE_CARD_MCP_MOUNT_PATH}{INTERACTIVE_CARD_MCP_TRANSPORT_PATH}",
+        auth_token=auth_token,
+        timeout=60,
     )
 
 

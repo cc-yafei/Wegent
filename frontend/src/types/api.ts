@@ -543,6 +543,34 @@ export interface AskUserAnswer {
   answers?: Record<string, string | string[]>
 }
 
+export interface InteractiveCardButton {
+  id: string
+  label: string
+  /** Hidden prompt sent to AI when clicked – never rendered to user */
+  prompt: string
+  style?: 'primary' | 'secondary' | 'danger'
+}
+
+export interface InteractiveCardData {
+  type: 'interactive_card'
+  card_id: string
+  task_id: number
+  subtask_id: number
+  title: string
+  description?: string | null
+  created_at: string
+  status: 'pending' | 'polling' | 'completed' | 'failed'
+  progress?: number | null
+  status_text?: string | null
+  click_url?: string | null
+  buttons: InteractiveCardButton[]
+  dismissed: boolean
+  dismissed_label?: string | null
+  poll_url?: string | null
+  poll_interval?: number
+  poll_max_retries?: number
+}
+
 export interface FinalPromptData {
   type: 'final_prompt'
   final_prompt: string

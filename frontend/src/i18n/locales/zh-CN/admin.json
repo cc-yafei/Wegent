@@ -305,6 +305,31 @@
       "tip_required": "中英文提示内容均为必填项"
     }
   },
+  "card_field_mappings": {
+    "title": "卡片轮询字段映射",
+    "description": "配置异步卡片 poll_url 响应体到卡片字段的映射规则，系统将根据 URL 正则自动匹配",
+    "add": "添加映射",
+    "edit": "编辑映射",
+    "no_mappings": "暂无映射配置",
+    "name": "名称",
+    "name_placeholder": "映射规则名称",
+    "description_label": "描述",
+    "description_placeholder": "可选描述",
+    "url_pattern": "URL 正则",
+    "url_pattern_placeholder": "匹配 poll_url 的正则表达式，如 https://api\\.myservice\\.com/.*",
+    "field_mapping": "字段映射 (JSON)",
+    "field_mapping_placeholder": "{ \"status\": \"data.state\", \"progress\": \"data.pct\", \"status_text\": \"data.message\" }",
+    "status_value_mapping": "状态值映射 (JSON)",
+    "status_value_mapping_placeholder": "{ \"completed\": [\"done\", \"success\"], \"failed\": [\"error\"] }",
+    "delete_title": "删除映射",
+    "delete_message": "确定要删除此字段映射吗？",
+    "save_success": "字段映射保存成功",
+    "save_failed": "字段映射保存失败",
+    "load_failed": "加载字段映射失败",
+    "json_invalid": "JSON 格式不正确",
+    "name_required": "名称不能为空",
+    "url_pattern_required": "URL 正则不能为空"
+  },
   "api_keys": {
     "title": "密钥管理",
     "description": "管理服务密钥和个人 API 密钥",
