@@ -8,7 +8,7 @@ API integration tests for OpenAPI v1/responses endpoints.
 
 from datetime import datetime
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -495,6 +495,10 @@ class TestOpenAPIResponsesCreate:
             assistant_subtask=SimpleNamespace(id=654),
         )
         execution_request = SimpleNamespace(task_id=101, subtask_id=654)
+        query_db = MagicMock()
+        query_db.query.return_value.filter.return_value.order_by.return_value.all.return_value = (
+            []
+        )
 
         with (
             patch(
@@ -512,6 +516,10 @@ class TestOpenAPIResponsesCreate:
             patch(
                 "app.services.execution.execution_dispatcher.dispatch", new=AsyncMock()
             ),
+            patch(
+                "app.db.session.SessionLocal",
+                return_value=query_db,
+            ),
         ):
             response = await _create_non_streaming_response_unified(
                 db=test_db,
@@ -527,6 +535,7 @@ class TestOpenAPIResponsesCreate:
             )
 
         assert response.status == "queued"
+        query_db.close.assert_called()
         assert mock_build_execution_request.await_args.kwargs["user_subtask_id"] == 321
         assert mock_build_execution_request.await_args.kwargs["message"] == (
             "follow-up question"
