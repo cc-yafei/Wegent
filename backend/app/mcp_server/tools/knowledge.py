@@ -42,7 +42,7 @@ def _get_user_from_token(db: Session, token_info: TaskTokenInfo) -> Optional[Use
 
 
 @mcp_tool(
-    name="search_knowledge_base",
+    name="wegent_kb_search_knowledge_base",
     description="Search documents in a knowledge base using RAG retrieval. Returns relevant chunks with source references. The knowledge base must have a retriever configured.",
     server="knowledge",
     param_descriptions={
@@ -161,7 +161,7 @@ async def search_knowledge_base(
 
 
 @mcp_tool(
-    name="list_knowledge_bases",
+    name="wegent_kb_list_knowledge_bases",
     description="List all knowledge bases accessible to the current user.",
     server="knowledge",
     param_descriptions={
@@ -212,7 +212,7 @@ def list_knowledge_bases(
 
 
 @mcp_tool(
-    name="list_documents",
+    name="wegent_kb_list_documents",
     description="List all documents in a knowledge base.",
     server="knowledge",
     param_descriptions={
@@ -263,7 +263,7 @@ def list_documents(
 
 
 @mcp_tool(
-    name="create_knowledge_base",
+    name="wegent_kb_create_knowledge_base",
     description="Create a new knowledge base with auto-configuration for retriever, embedding, and summary model.",
     server="knowledge",
     param_descriptions={
@@ -336,7 +336,7 @@ def create_knowledge_base(
 
 
 @mcp_tool(
-    name="create_document",
+    name="wegent_kb_create_document",
     description=(
         "Create a document in a knowledge base. Supports text content, base64-encoded "
         "files, URL scraping, or existing attachment reference.\n\n"
@@ -344,7 +344,7 @@ def create_knowledge_base(
         "'contentAttachmentIds', ALWAYS use source_type='attachment' with one of those "
         "IDs instead of source_type='text'. This avoids re-outputting the full content "
         "through the model output window, which is critical for large documents.\n\n"
-        "Example for inbox: create_document(knowledge_base_id=1, name='Article', "
+        "Example for inbox: wegent_kb_create_document(knowledge_base_id=1, name='Article', "
         "source_type='attachment', attachment_id=<contentAttachmentIds[0]>)"
     ),
     server="knowledge",
@@ -447,7 +447,7 @@ def create_document(
 
 
 @mcp_tool(
-    name="read_document_content",
+    name="wegent_kb_read_document_content",
     description="Read document content with offset/limit pagination.",
     server="knowledge",
     param_descriptions={
@@ -503,7 +503,7 @@ def read_document_content(
 
 
 @mcp_tool(
-    name="update_document_content",
+    name="wegent_kb_update_document_content",
     description="Update document content for text documents and editable plain-text files such as txt, md, and markdown.",
     server="knowledge",
     param_descriptions={
